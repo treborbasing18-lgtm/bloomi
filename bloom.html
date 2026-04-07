@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bloom – Mental Health</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#f97c5a">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Bloom">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --peach:#f97c5a;--peach-light:#f4a97a;--peach-pale:#fff0e8;
+      --peach-bg:#FFF8F4;--peach-border:#f0d9cc;
+      --brown-dark:#3d2b1f;--brown-mid:#6d4c3a;--brown-light:#a08070;
+      --shadow:0 2px 14px rgba(249,124,90,.10);--radius:20px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;background:#ddd4ce}
+    body{font-family:'DM Sans',system-ui,sans-serif;display:flex;align-items:center;justify-content:center}
+    .phone{width:min(400px,100%);background:var(--peach-bg);min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 80px rgba(0,0,0,.18)}
+    .status-bar{background:var(--peach);padding:12px 20px 10px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+    .app-name{font-family:'DM Serif Display',serif;font-size:18px;color:#fff;letter-spacing:.02em}
+    .status-right{font-size:11px;color:rgba(255,255,255,.85);font-weight:500}
+    .status-user{font-size:11px;color:rgba(255,255,255,.9);font-weight:600;cursor:pointer}
+    .screen{display:none;flex-direction:column;flex:1;overflow:hidden}
+    .screen.active{display:flex}
+    .nav{display:flex;background:#fff;border-top:1px solid var(--peach-border);padding:8px 0 env(safe-area-inset-bottom,6px);flex-shrink:0}
+    .nav button{flex:1;background:none;border:none;cursor:pointer;padding:4px 0;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-family:'DM Sans',sans-serif;font-weight:600;color:var(--brown-light);transition:color .2s,transform .15s}
+    .nav button:active{transform:scale(.9)}
+    .nav button.active{color:var(--peach)}
+    .nav-icon{font-size:19px}
+    .content{flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch}
+    .screen-title{font-family:'DM Serif Display',serif;font-size:17px;color:var(--brown-dark);text-align:center;padding:14px 16px 2px;flex-shrink:0}
+    .greeting{font-family:'DM Serif Display',serif;font-size:26px;color:var(--brown-dark);margin-bottom:4px;line-height:1.2}
+    .sub{font-size:13px;color:var(--brown-light);margin-bottom:18px}
+    .card{background:#fff;border-radius:var(--radius);padding:16px;margin-bottom:12px;border:1px solid var(--peach-border);box-shadow:var(--shadow)}
+    .card-title{font-size:11px;font-weight:600;color:var(--brown-light);margin-bottom:12px;letter-spacing:.08em;text-transform:uppercase}
+    .btn-primary{background:linear-gradient(135deg,var(--peach),var(--peach-light));color:#fff;border:none;border-radius:28px;padding:13px 32px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;width:100%;margin-top:12px;box-shadow:0 4px 16px rgba(249,124,90,.35);transition:transform .15s}
+    .btn-primary:active{transform:scale(.97)}
+    .btn-primary:disabled{opacity:.6;cursor:not-allowed}
+    .btn-outline{background:#fff;color:var(--peach);border:2px solid var(--peach);border-radius:28px;padding:11px 32px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;width:100%;margin-top:10px;transition:transform .15s}
+    .btn-outline:active{transform:scale(.97)}
+    .input-group{margin-bottom:14px}
+    .input-label{font-size:11px;font-weight:600;color:var(--brown-light);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:6px}
+    .input-field{width:100%;border-radius:14px;border:1.5px solid var(--peach-border);padding:12px 14px;font-size:14px;color:var(--brown-dark);font-family:'DM Sans',sans-serif;background:#fff;transition:border-color .2s}
+    .input-field:focus{outline:none;border-color:var(--peach)}
+    .input-error{border-color:#e05252!important}
+    .field-error{font-size:11px;color:#e05252;margin-top:4px}
+    .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--brown-dark);color:#fff;border-radius:24px;padding:10px 20px;font-size:13px;font-weight:500;opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:9999;white-space:nowrap}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    .toast.error{background:#c0392b}
+    .loading-overlay{display:none;position:fixed;inset:0;background:rgba(255,248,244,.85);align-items:center;justify-content:center;z-index:9998;flex-direction:column;gap:12px}
+    .loading-overlay.show{display:flex}
+    .spinner{width:40px;height:40px;border-radius:50%;border:3px solid var(--peach-border);border-top-color:var(--peach);animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-text{font-size:13px;color:var(--brown-light);font-weight:500}
+    /* AUTH */
+    .auth-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px}
+    .auth-logo{font-family:'DM Serif Display',serif;font-size:52px;color:var(--peach);margin-bottom:4px;animation:bloom-in .6s cubic-bezier(.34,1.56,.64,1)}
+    @keyframes bloom-in{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+    .auth-tagline{font-size:13px;color:var(--brown-light);margin-bottom:32px;text-align:center;line-height:1.6}
+    .auth-card{background:#fff;border-radius:var(--radius);padding:24px;width:100%;border:1px solid var(--peach-border);box-shadow:var(--shadow)}
+    .auth-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--brown-dark);margin-bottom:20px}
+    .auth-switch{text-align:center;margin-top:16px;font-size:13px;color:var(--brown-light)}
+    .auth-link{color:var(--peach);font-weight:600;cursor:pointer}
+    .auth-divider{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--brown-light);font-size:12px}
+    .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--peach-border)}
+    /* HOME */
+    .quote-card{background:linear-gradient(135deg,var(--peach) 0%,var(--peach-light) 100%);border-radius:var(--radius);padding:18px;margin-bottom:12px;box-shadow:0 4px 20px rgba(249,124,90,.28)}
+    .quote-text{font-family:'DM Serif Display',serif;font-style:italic;font-size:15px;color:#fff;line-height:1.55}
+    .quote-author{font-size:11px;color:rgba(255,255,255,.8);margin-top:10px;font-weight:500}
+    .feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+    .feat-card{background:#fff;border-radius:var(--radius);padding:16px 14px;border:1px solid var(--peach-border);cursor:pointer;box-shadow:var(--shadow);transition:transform .18s}
+    .feat-card:active{transform:scale(.95)}
+    .feat-icon{font-size:26px;margin-bottom:8px}
+    .feat-label{font-size:13px;font-weight:600;color:var(--brown-dark)}
+    .feat-desc{font-size:11px;color:var(--brown-light);margin-top:2px}
+    .mood-row{display:flex;justify-content:space-between;gap:4px}
+    .mood-btn{background:none;border:2px solid transparent;border-radius:14px;padding:8px 4px 6px;cursor:pointer;text-align:center;flex:1;transition:all .2s;font-family:'DM Sans',sans-serif}
+    .mood-btn span{display:block;font-size:24px;margin-bottom:3px}
+    .mood-btn small{font-size:9px;color:var(--brown-light);font-weight:600}
+    .mood-btn.selected{border-color:var(--peach);background:var(--peach-pale)}
+    .mood-btn:active{transform:scale(.9)}
+    /* MOOD CHART */
+    .mood-chart{display:flex;align-items:flex-end;gap:6px;height:60px;margin-top:8px}
+    .mood-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+    .mood-bar{width:100%;background:var(--peach-pale);border-radius:6px 6px 0 0;transition:height .5s ease;min-height:4px}
+    .mood-bar.filled{background:linear-gradient(180deg,var(--peach-light),var(--peach))}
+    .mood-bar-label{font-size:8px;color:var(--brown-light);font-weight:600}
+    /* BREATH */
+    .breath-circle-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:20px}
+    .breath-label{font-family:'DM Serif Display',serif;font-size:22px;color:var(--brown-dark);margin-bottom:4px}
+    .breath-sub{font-size:11px;color:var(--brown-light);margin-bottom:32px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+    .circle-outer{width:170px;height:170px;border-radius:50%;background:var(--peach-pale);border:3px solid var(--peach);display:flex;align-items:center;justify-content:center;transition:transform 4s cubic-bezier(.4,0,.2,1);box-shadow:0 0 50px rgba(249,124,90,.15)}
+    .circle-inner{width:95px;height:95px;border-radius:50%;background:linear-gradient(135deg,var(--peach),var(--peach-light));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(249,124,90,.4)}
+    .circle-inner span{font-family:'DM Serif Display',serif;font-size:32px;color:#fff}
+    .breath-phase{font-size:19px;font-weight:600;color:var(--peach);margin-top:28px;letter-spacing:.03em}
+    /* JOURNAL */
+    .journal-header{font-family:'DM Serif Display',serif;font-size:20px;color:var(--brown-dark);margin-bottom:4px}
+    .journal-date{font-size:12px;color:var(--brown-light);margin-bottom:14px}
+    .journal-prompt{font-size:13px;color:var(--brown-mid);background:var(--peach-pale);border-radius:14px;padding:13px 14px;margin-bottom:12px;border-left:3px solid var(--peach);line-height:1.5}
+    textarea{width:100%;height:130px;border-radius:14px;border:1.5px solid var(--peach-border);padding:13px;font-size:13px;color:var(--brown-dark);font-family:'DM Sans',sans-serif;resize:none;background:#fff;transition:border-color .2s;line-height:1.6}
+    textarea:focus{outline:none;border-color:var(--peach)}
+    .section-label{font-size:11px;font-weight:600;color:var(--brown-light);margin:16px 0 8px;text-transform:uppercase;letter-spacing:.08em}
+    .entry-item{background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--peach-border)}
+    .entry-date{font-size:10px;color:var(--brown-light);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+    .entry-preview{font-size:12px;color:var(--brown-mid);line-height:1.5}
+    .no-entries{font-size:13px;color:var(--brown-light);text-align:center;padding:16px}
+    .reframe-card{background:#fff;border-radius:18px;padding:16px;margin-bottom:12px;border:1px solid var(--peach-border);box-shadow:var(--shadow)}
+    .thought-label{font-size:10px;color:var(--brown-light);font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:.07em}
+    .thought-text{font-size:13px;color:var(--brown-dark);font-style:italic}
+    .arrow{text-align:center;font-size:20px;color:var(--peach);margin:8px 0}
+    .reframe-text{font-size:13px;color:var(--brown-dark);background:var(--peach-pale);border-radius:11px;padding:11px 12px;margin-top:6px;line-height:1.55}
+    /* SLEEP */
+    .sleep-header{font-family:'DM Serif Display',serif;font-size:20px;color:var(--brown-dark);margin-bottom:14px}
+    .sleep-option{background:#fff;border-radius:16px;padding:14px;margin-bottom:10px;border:2px solid transparent;cursor:pointer;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);transition:all .2s}
+    .sleep-option:active{transform:scale(.97)}
+    .sleep-option.sel{border-color:var(--peach);background:var(--peach-pale)}
+    .sleep-icon{font-size:28px}
+    .sleep-name{font-size:14px;font-weight:600;color:var(--brown-dark)}
+    .sleep-desc{font-size:11px;color:var(--brown-light);margin-top:2px}
+    .playing-badge{margin-left:auto;font-size:9px;background:var(--peach);color:#fff;border-radius:20px;padding:3px 8px;font-weight:600;display:none;flex-shrink:0}
+    .sleep-option.playing .playing-badge{display:block}
+    .sleep-timer-row{display:flex;gap:8px;margin-top:12px;justify-content:center}
+    .timer-btn{background:#fff;border:1.5px solid var(--peach-border);color:var(--brown-mid);border-radius:20px;padding:7px 16px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s}
+    .timer-btn.active{background:var(--peach);border-color:var(--peach);color:#fff}
+    /* HELP */
+    .crisis-header{font-family:'DM Serif Display',serif;font-size:22px;color:var(--brown-dark);margin-bottom:6px}
+    .crisis-sub{font-size:13px;color:var(--brown-light);margin-bottom:18px;line-height:1.6}
+    .pro-card{background:#fff;border-radius:18px;padding:14px 16px;margin-bottom:10px;border:1px solid var(--peach-border);display:flex;align-items:center;gap:13px;cursor:pointer;box-shadow:var(--shadow);transition:transform .15s}
+    .pro-card:active{transform:scale(.97)}
+    .avatar{width:46px;height:46px;border-radius:50%;background:var(--peach-pale);border:2px solid var(--peach-border);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+    .pro-info .name{font-size:14px;font-weight:600;color:var(--brown-dark)}
+    .pro-info .spec{font-size:11px;color:var(--brown-light);margin-top:2px;line-height:1.4}
+    .badge{font-size:10px;background:var(--peach-pale);color:var(--peach);border-radius:20px;padding:3px 9px;margin-top:5px;display:inline-block;font-weight:600}
+    .badge.avail{background:#e8f5e9;color:#388e3c}
+    .hotline{background:#fff;border-radius:14px;padding:13px 15px;margin-bottom:8px;border:1px solid var(--peach-border);box-shadow:var(--shadow)}
+    .hotline-name{font-size:13px;font-weight:600;color:var(--brown-dark)}
+    .hotline-num{font-size:13px;color:var(--peach);margin-top:3px;font-weight:500}
+    /* PROFILE */
+    .profile-section{background:#fff;border-radius:var(--radius);padding:16px;margin-bottom:12px;border:1px solid var(--peach-border);box-shadow:var(--shadow);display:flex;align-items:center;gap:14px}
+    .profile-avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--peach),var(--peach-light));display:flex;align-items:center;justify-content:center;font-size:22px;font-family:'DM Serif Display',serif;color:#fff;flex-shrink:0}
+    .profile-name{font-size:15px;font-weight:600;color:var(--brown-dark)}
+    .profile-email{font-size:12px;color:var(--brown-light);margin-top:2px}
+    .logout-btn{margin-left:auto;background:none;border:1.5px solid var(--peach-border);color:var(--brown-light);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;flex-shrink:0}
+    .logout-btn:hover{border-color:var(--peach);color:var(--peach)}
+  </style>
+</head>
+<body>
+<div class="phone">
+  <div class="status-bar">
+    <span class="app-name">🌸 Bloom</span>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="status-user" id="status-user" onclick="goTo('profile')" style="display:none;"></span>
+      <span class="status-right" id="clock"></span>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="loading-overlay" id="loader">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loader-text">Loading…</div>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="screen active" id="screen-login">
+    <div class="auth-wrap">
+      <div class="auth-logo">🌸</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--brown-dark);margin-bottom:6px;">Bloom</div>
+      <div class="auth-tagline">Your daily mental wellness companion.<br>Every step forward matters.</div>
+      <div class="auth-card">
+        <div class="auth-title">Welcome back</div>
+        <div class="input-group">
+          <label class="input-label">Email</label>
+          <input class="input-field" id="login-email" type="email" placeholder="you@example.com" autocomplete="email">
+          <div class="field-error" id="login-email-err"></div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Password</label>
+          <input class="input-field" id="login-password" type="password" placeholder="••••••••" autocomplete="current-password">
+          <div class="field-error" id="login-pass-err"></div>
+        </div>
+        <button class="btn-primary" onclick="doLogin()">Sign in</button>
+        <div class="auth-divider">or</div>
+        <div class="auth-switch">New to Bloom? <span class="auth-link" onclick="goTo('register')">Create account</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGISTER -->
+  <div class="screen" id="screen-register">
+    <div class="auth-wrap">
+      <div class="auth-logo">🌱</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--brown-dark);margin-bottom:6px;">Get started</div>
+      <div class="auth-tagline">Create your free account.<br>Your data stays private and secure.</div>
+      <div class="auth-card">
+        <div class="auth-title">Create account</div>
+        <div class="input-group">
+          <label class="input-label">Your name</label>
+          <input class="input-field" id="reg-name" type="text" placeholder="e.g. Maria" autocomplete="name">
+          <div class="field-error" id="reg-name-err"></div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Email</label>
+          <input class="input-field" id="reg-email" type="email" placeholder="you@example.com" autocomplete="email">
+          <div class="field-error" id="reg-email-err"></div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Password (min. 6 characters)</label>
+          <input class="input-field" id="reg-password" type="password" placeholder="••••••••" autocomplete="new-password">
+          <div class="field-error" id="reg-pass-err"></div>
+        </div>
+        <button class="btn-primary" onclick="doRegister()">Create account</button>
+        <div class="auth-divider">or</div>
+        <div class="auth-switch">Already have an account? <span class="auth-link" onclick="goTo('login')">Sign in</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen" id="screen-home">
+    <div class="content">
+      <div class="greeting" id="greeting-text">Good morning 🌸</div>
+      <div class="sub" id="greeting-sub">How are you feeling today?</div>
+      <div class="card">
+        <div class="card-title">Today's mood</div>
+        <div class="mood-row">
+          <button class="mood-btn" onclick="selectMood(this,'Low',1)"><span>😔</span><small>Low</small></button>
+          <button class="mood-btn" onclick="selectMood(this,'Okay',2)"><span>😐</span><small>Okay</small></button>
+          <button class="mood-btn" onclick="selectMood(this,'Good',3)"><span>🙂</span><small>Good</small></button>
+          <button class="mood-btn" onclick="selectMood(this,'Great',4)"><span>😊</span><small>Great</small></button>
+          <button class="mood-btn" onclick="selectMood(this,'Amazing',5)"><span>🤩</span><small>Amazing</small></button>
+        </div>
+      </div>
+      <div class="card" id="mood-chart-card" style="display:none;">
+        <div class="card-title">This week's mood</div>
+        <div class="mood-chart" id="mood-chart"></div>
+      </div>
+      <div class="quote-card">
+        <div class="quote-text" id="daily-quote"></div>
+        <div class="quote-author" id="daily-author"></div>
+      </div>
+      <div class="feature-grid">
+        <div class="feat-card" onclick="goTo('breath')"><div class="feat-icon">🌬️</div><div class="feat-label">Breathe</div><div class="feat-desc">Guided breathing</div></div>
+        <div class="feat-card" onclick="goTo('journal')"><div class="feat-icon">📓</div><div class="feat-label">Journal</div><div class="feat-desc">Reflect & reframe</div></div>
+        <div class="feat-card" onclick="goTo('sleep')"><div class="feat-icon">🌙</div><div class="feat-label">Sleep</div><div class="feat-desc">Wind-down tools</div></div>
+        <div class="feat-card" onclick="goTo('help')"><div class="feat-icon">💬</div><div class="feat-label">Get Help</div><div class="feat-desc">Talk to a professional</div></div>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="active"><span class="nav-icon">🏠</span>Home</button>
+      <button onclick="goTo('breath')"><span class="nav-icon">🌬️</span>Breathe</button>
+      <button onclick="goTo('journal')"><span class="nav-icon">📓</span>Journal</button>
+      <button onclick="goTo('sleep')"><span class="nav-icon">🌙</span>Sleep</button>
+      <button onclick="goTo('help')"><span class="nav-icon">💬</span>Help</button>
+    </div>
+  </div>
+
+  <!-- BREATHING -->
+  <div class="screen" id="screen-breath">
+    <div class="screen-title">Guided Breathing</div>
+    <div class="breath-circle-wrap">
+      <div class="breath-label">Box Breathing</div>
+      <div class="breath-sub">Inhale · Hold · Exhale · Hold</div>
+      <div class="circle-outer" id="circle"><div class="circle-inner"><span id="count-num">4</span></div></div>
+      <div class="breath-phase" id="phase-text">Ready</div>
+      <button class="btn-primary" id="breath-btn" onclick="toggleBreath()">Start</button>
+      <button class="btn-outline" onclick="goTo('home')">← Back to home</button>
+    </div>
+    <div class="nav">
+      <button onclick="goTo('home')"><span class="nav-icon">🏠</span>Home</button>
+      <button class="active"><span class="nav-icon">🌬️</span>Breathe</button>
+      <button onclick="goTo('journal')"><span class="nav-icon">📓</span>Journal</button>
+      <button onclick="goTo('sleep')"><span class="nav-icon">🌙</span>Sleep</button>
+      <button onclick="goTo('help')"><span class="nav-icon">💬</span>Help</button>
+    </div>
+  </div>
+
+  <!-- JOURNAL -->
+  <div class="screen" id="screen-journal">
+    <div class="screen-title">Journal & Reframe</div>
+    <div class="content">
+      <div class="journal-header">Today's reflection</div>
+      <div class="journal-date" id="journal-date"></div>
+      <div class="journal-prompt">✨ <span id="journal-prompt-text"></span></div>
+      <textarea id="journal-textarea" placeholder="Write freely here — this is your safe space…"></textarea>
+      <button class="btn-primary" onclick="saveJournal()">Save entry</button>
+      <div class="section-label" style="margin-top:20px;">Past entries</div>
+      <div id="entries-list"><div class="no-entries">Loading entries… 🌱</div></div>
+      <div class="section-label" style="margin-top:24px;">Cognitive reframing</div>
+      <div class="reframe-card"><div class="thought-label">Negative thought</div><div class="thought-text">"I always mess things up."</div><div class="arrow">↓</div><div class="thought-label">Balanced perspective</div><div class="reframe-text">Everyone makes mistakes sometimes. This doesn't define me — it's one moment, not my whole story.</div></div>
+      <div class="reframe-card"><div class="thought-label">Negative thought</div><div class="thought-text">"Nobody cares about me."</div><div class="arrow">↓</div><div class="thought-label">Balanced perspective</div><div class="reframe-text">I may not always feel it, but there are people in my life who do care. I can reach out today.</div></div>
+      <div class="reframe-card"><div class="thought-label">Negative thought</div><div class="thought-text">"I'm not good enough."</div><div class="arrow">↓</div><div class="thought-label">Balanced perspective</div><div class="reframe-text">I am a work in progress — and that is perfectly okay. Growth takes time, not perfection.</div></div>
+    </div>
+    <div class="nav">
+      <button onclick="goTo('home')"><span class="nav-icon">🏠</span>Home</button>
+      <button onclick="goTo('breath')"><span class="nav-icon">🌬️</span>Breathe</button>
+      <button class="active"><span class="nav-icon">📓</span>Journal</button>
+      <button onclick="goTo('sleep')"><span class="nav-icon">🌙</span>Sleep</button>
+      <button onclick="goTo('help')"><span class="nav-icon">💬</span>Help</button>
+    </div>
+  </div>
+
+  <!-- SLEEP -->
+  <div class="screen" id="screen-sleep">
+    <div class="screen-title">Sleep Support</div>
+    <div class="content">
+      <div class="sleep-header">Wind down tonight 🌙</div>
+      <div class="sleep-option sel" onclick="selectSleep(this,0)"><div class="sleep-icon">🌊</div><div style="flex:1;"><div class="sleep-name">Ocean waves</div><div class="sleep-desc">Gentle rolling sounds for deep rest</div></div><div class="playing-badge">▶ Playing</div></div>
+      <div class="sleep-option" onclick="selectSleep(this,1)"><div class="sleep-icon">🌧️</div><div style="flex:1;"><div class="sleep-name">Rainfall</div><div class="sleep-desc">Soft rain to calm a busy mind</div></div><div class="playing-badge">▶ Playing</div></div>
+      <div class="sleep-option" onclick="selectSleep(this,2)"><div class="sleep-icon">🔥</div><div style="flex:1;"><div class="sleep-name">Fireplace</div><div class="sleep-desc">Warm crackling for cozy sleep</div></div><div class="playing-badge">▶ Playing</div></div>
+      <div class="sleep-option" onclick="selectSleep(this,3)"><div class="sleep-icon">🎵</div><div style="flex:1;"><div class="sleep-name">Guided sleep meditation</div><div class="sleep-desc">10-min body scan to release tension</div></div><div class="playing-badge">▶ Playing</div></div>
+      <button class="btn-primary" onclick="playSelectedSleep()">▶ Play selected</button>
+      <button class="btn-outline" onclick="stopAllSleep()">■ Stop</button>
+      <div class="sleep-timer-row">
+        <button class="timer-btn" onclick="setSleepTimer(this,30)">30 min</button>
+        <button class="timer-btn" onclick="setSleepTimer(this,60)">60 min</button>
+        <button class="timer-btn" onclick="setSleepTimer(this,90)">90 min</button>
+        <button class="timer-btn" onclick="setSleepTimer(this,0)">Off</button>
+      </div>
+      <audio id="audio-ocean" src="ocean.mp3" loop></audio>
+      <audio id="audio-rain" src="rain.mp3" loop></audio>
+      <audio id="audio-fireplace" src="fireplace.mp3" loop></audio>
+      <audio id="audio-meditation" src="meditation.mp3"></audio>
+    </div>
+    <div class="nav">
+      <button onclick="goTo('home')"><span class="nav-icon">🏠</span>Home</button>
+      <button onclick="goTo('breath')"><span class="nav-icon">🌬️</span>Breathe</button>
+      <button onclick="goTo('journal')"><span class="nav-icon">📓</span>Journal</button>
+      <button class="active"><span class="nav-icon">🌙</span>Sleep</button>
+      <button onclick="goTo('help')"><span class="nav-icon">💬</span>Help</button>
+    </div>
+  </div>
+
+  <!-- HELP -->
+  <div class="screen" id="screen-help">
+    <div class="screen-title">Get Support</div>
+    <div class="content">
+      <div class="crisis-header">You're not alone 💛</div>
+      <div class="crisis-sub">Connect with a licensed professional anytime. If you're in crisis, please reach out immediately.</div>
+      <div id="therapist-list"><div class="no-entries">Loading therapists…</div></div>
+      <div class="section-label" style="margin-top:18px;">Crisis hotlines</div>
+      <div class="hotline"><div class="hotline-name">National Suicide Prevention Lifeline</div><div class="hotline-num">988 (call or text)</div></div>
+      <div class="hotline"><div class="hotline-name">Crisis Text Line</div><div class="hotline-num">Text HOME to 741741</div></div>
+      <div class="hotline"><div class="hotline-name">International Crisis Centres</div><div class="hotline-num">iasp.info/resources/Crisis_Centres/</div></div>
+    </div>
+    <div class="nav">
+      <button onclick="goTo('home')"><span class="nav-icon">🏠</span>Home</button>
+      <button onclick="goTo('breath')"><span class="nav-icon">🌬️</span>Breathe</button>
+      <button onclick="goTo('journal')"><span class="nav-icon">📓</span>Journal</button>
+      <button onclick="goTo('sleep')"><span class="nav-icon">🌙</span>Sleep</button>
+      <button class="active"><span class="nav-icon">💬</span>Help</button>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="screen" id="screen-profile">
+    <div class="screen-title">My Profile</div>
+    <div class="content">
+      <div class="profile-section">
+        <div class="profile-avatar" id="profile-avatar">?</div>
+        <div><div class="profile-name" id="profile-name">—</div><div class="profile-email" id="profile-email">—</div></div>
+        <button class="logout-btn" onclick="doLogout()">Sign out</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Mood summary (last 7 days)</div>
+        <div id="mood-summary-text" style="font-size:13px;color:var(--brown-mid);line-height:1.7;">Loading…</div>
+      </div>
+      <div style="font-size:12px;color:var(--brown-light);text-align:center;padding:16px;line-height:1.6;">
+        🌸 Bloom stores your data securely on our server.<br>Your journal entries and mood logs are private to you.
+      </div>
+    </div>
+    <div class="nav">
+      <button onclick="goTo('home')"><span class="nav-icon">🏠</span>Home</button>
+      <button onclick="goTo('breath')"><span class="nav-icon">🌬️</span>Breathe</button>
+      <button onclick="goTo('journal')"><span class="nav-icon">📓</span>Journal</button>
+      <button onclick="goTo('sleep')"><span class="nav-icon">🌙</span>Sleep</button>
+      <button onclick="goTo('help')"><span class="nav-icon">💬</span>Help</button>
+    </div>
+  </div>
+</div>
+
+<audio id="audio-notify" src="notify.mp3" preload="auto"></audio>
+
+<script>
+/* ── CONFIG ── change this to your server address when deployed */
+const API = 'http://127.0.0.1:8000';
+
+/* ── STATE ── */
+let token    = localStorage.getItem('bloom_token') || null;
+let userData = JSON.parse(localStorage.getItem('bloom_user') || 'null');
+
+/* ── UTILITIES ── */
+let toastTimer = null;
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast'+(isError?' error':'')+' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function showLoader(msg='Loading…'){document.getElementById('loader-text').textContent=msg;document.getElementById('loader').classList.add('show')}
+function hideLoader(){document.getElementById('loader').classList.remove('show')}
+function playNotify(){const a=document.getElementById('audio-notify');if(a){a.currentTime=0;a.play().catch(()=>{})}}
+
+/* ── API HELPER ── */
+async function apiFetch(path, options={}) {
+  const headers = {'Content-Type':'application/json',...(options.headers||{})};
+  if (token) headers['Authorization'] = 'Bearer '+token;
+  try {
+    const res = await fetch(API+path, {...options, headers});
+    if (res.status===401){doLogout();return null;}
+    const data = res.headers.get('content-type')?.includes('json') ? await res.json() : null;
+    if (!res.ok) throw new Error(data?.detail||'Something went wrong');
+    return data;
+  } catch(err) {
+    if (err.message==='Failed to fetch') showToast('Cannot reach server. Is the backend running?',true);
+    else showToast(err.message,true);
+    return null;
+  }
+}
+
+/* ── NAVIGATION ── */
+function goTo(screen) {
+  const auth=['login','register'];
+  const prot=['home','breath','journal','sleep','help','profile'];
+  if (prot.includes(screen)&&!token) screen='login';
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+screen).classList.add('active');
+  if (screen==='journal') {loadJournalEntries();}
+  if (screen==='help')    {loadTherapists();}
+  if (screen==='profile') {loadProfile();loadMoodSummary();}
+  if (screen==='home')    {loadMoodHistory();}
+}
+
+/* ── CLOCK ── */
+function updateClock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}
+updateClock(); setInterval(updateClock,10000);
+
+/* ── GREETING ── */
+function setGreeting(){
+  const h=new Date().getHours();
+  const el=document.getElementById('greeting-text');
+  if(!el)return;
+  if(h<12)el.textContent='Good morning 🌸';
+  else if(h<17)el.textContent='Good afternoon ☀️';
+  else el.textContent='Good evening 🌙';
+  const name=userData?.name?.split(' ')[0];
+  document.getElementById('greeting-sub').textContent=name?`How are you feeling today, ${name}?`:'How are you feeling today?';
+}
+
+/* ── DAILY QUOTE ── */
+const quotes=[
+  {text:'"You don\'t have to control your thoughts. You just have to stop letting them control you."',author:'— Dan Millman'},
+  {text:'"Almost everything will work again if you unplug it for a few minutes, including you."',author:'— Anne Lamott'},
+  {text:'"You are allowed to be both a masterpiece and a work in progress simultaneously."',author:'— Sophia Bush'},
+  {text:'"Self-care is not self-indulgence, it is self-preservation."',author:'— Audre Lorde'},
+  {text:'"There is hope, even when your brain tells you there isn\'t."',author:'— John Green'},
+  {text:'"Healing is not linear. Some days are harder than others — and that\'s okay."',author:'— Unknown'},
+  {text:'"Be gentle with yourself. You are a child of the universe."',author:'— Max Ehrmann'},
+];
+function setDailyQuote(){const q=quotes[new Date().getDay()%quotes.length];const qt=document.getElementById('daily-quote');const qa=document.getElementById('daily-author');if(qt)qt.textContent=q.text;if(qa)qa.textContent=q.author;}
+
+/* ── JOURNAL PROMPTS ── */
+const prompts=['What is one small thing that went well today, even if the day was hard?','What emotion are you carrying right now, and where do you feel it in your body?','Write about a moment this week when you felt proud of yourself.','What would you say to a friend who was feeling the way you feel right now?','List three things you are grateful for — no matter how small.','What is one thing you need to let go of today?','Describe a safe place — real or imagined — and how it makes you feel.'];
+function setJournalMeta(){const d=new Date();const el=document.getElementById('journal-date');if(el)el.textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});const pt=document.getElementById('journal-prompt-text');if(pt)pt.textContent='Prompt: '+prompts[d.getDay()%prompts.length];}
+
+/* ── AUTH ── */
+function clearFieldErrors(){document.querySelectorAll('.field-error').forEach(e=>e.textContent='');document.querySelectorAll('.input-field').forEach(e=>e.classList.remove('input-error'));}
+function showFieldError(inputId,errId,msg){document.getElementById(inputId)?.classList.add('input-error');const e=document.getElementById(errId);if(e)e.textContent=msg;}
+
+async function doLogin(){
+  clearFieldErrors();
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-password').value;
+  let valid=true;
+  if(!email){showFieldError('login-email','login-email-err','Email is required');valid=false;}
+  if(!pass){showFieldError('login-password','login-pass-err','Password is required');valid=false;}
+  if(!valid)return;
+  showLoader('Signing you in…');
+  const body=new URLSearchParams({username:email,password:pass});
+  let res;
+  try{
+    const r=await fetch(API+'/auth/login',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+    res=await r.json();
+    if(!r.ok)throw new Error(res.detail||'Login failed');
+  }catch(err){
+    hideLoader();
+    if(err.message==='Failed to fetch')showToast('Cannot reach server. Is the backend running?',true);
+    else showToast(err.message,true);
+    return;
+  }
+  token=res.access_token;
+  localStorage.setItem('bloom_token',token);
+  const me=await apiFetch('/auth/me');
+  hideLoader();
+  if(!me)return;
+  userData=me;
+  localStorage.setItem('bloom_user',JSON.stringify(me));
+  onLoginSuccess();
+}
+
+async function doRegister(){
+  clearFieldErrors();
+  const name=document.getElementById('reg-name').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pass=document.getElementById('reg-password').value;
+  let valid=true;
+  if(!name){showFieldError('reg-name','reg-name-err','Name is required');valid=false;}
+  if(!email){showFieldError('reg-email','reg-email-err','Email is required');valid=false;}
+  if(pass.length<6){showFieldError('reg-password','reg-pass-err','Min. 6 characters');valid=false;}
+  if(!valid)return;
+  showLoader('Creating your account…');
+  const data=await apiFetch('/auth/register',{method:'POST',body:JSON.stringify({name,email,password:pass})});
+  hideLoader();
+  if(!data)return;
+  showToast('Account created! Please sign in 🌸');
+  document.getElementById('reg-name').value='';
+  document.getElementById('reg-email').value='';
+  document.getElementById('reg-password').value='';
+  goTo('login');
+}
+
+function doLogout(){
+  token=null;userData=null;
+  localStorage.removeItem('bloom_token');
+  localStorage.removeItem('bloom_user');
+  document.getElementById('status-user').style.display='none';
+  stopAllSleep();
+  goTo('login');
+}
+
+function onLoginSuccess(){
+  const su=document.getElementById('status-user');
+  su.textContent=userData.name.split(' ')[0];
+  su.style.display='inline';
+  setGreeting();setDailyQuote();setJournalMeta();
+  goTo('home');
+  playNotify();
+  showToast('Welcome back, '+userData.name.split(' ')[0]+' 🌸');
+}
+
+/* ── MOOD ── */
+async function selectMood(btn,mood,score){
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const data=await apiFetch('/mood',{method:'POST',body:JSON.stringify({mood,score})});
+  if(data){showToast('Mood logged: '+mood+' ✓');playNotify();loadMoodHistory();}
+}
+
+async function loadMoodHistory(){
+  const data=await apiFetch('/mood?days=7');
+  if(!data||!data.length)return;
+  const card=document.getElementById('mood-chart-card');
+  const chart=document.getElementById('mood-chart');
+  if(!card||!chart)return;
+  card.style.display='block';
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const today=new Date().getDay();
+  const map={};
+  data.forEach(l=>{const d=new Date(l.logged_at).getDay();map[d]=l.score;});
+  chart.innerHTML='';
+  for(let i=6;i>=0;i--){
+    const dayIdx=(today-i+7)%7;
+    const score=map[dayIdx];
+    const pct=score?(score/5)*100:0;
+    const wrap=document.createElement('div');
+    wrap.className='mood-bar-wrap';
+    wrap.innerHTML=`<div class="mood-bar ${score?'filled':''}" style="height:${pct}%;"></div><div class="mood-bar-label">${days[dayIdx]}</div>`;
+    chart.appendChild(wrap);
+  }
+  const todayMood=data.find(l=>{const d=new Date(l.logged_at);return d.toDateString()===new Date().toDateString();});
+  if(todayMood){document.querySelectorAll('.mood-btn').forEach(btn=>{if(btn.querySelector('small').textContent===todayMood.mood)btn.classList.add('selected');});}
+}
+
+/* ── JOURNAL ── */
+async function saveJournal(){
+  const ta=document.getElementById('journal-textarea');
+  const text=ta.value.trim();
+  if(!text){showToast('Write something first ✏️',true);return;}
+  const prompt=document.getElementById('journal-prompt-text')?.textContent||'';
+  const data=await apiFetch('/journal',{method:'POST',body:JSON.stringify({text,prompt})});
+  if(data){ta.value='';showToast('Entry saved ✨');playNotify();loadJournalEntries();}
+}
+
+async function loadJournalEntries(){
+  const el=document.getElementById('entries-list');
+  if(!el)return;
+  const data=await apiFetch('/journal?limit=5');
+  if(!data){el.innerHTML='<div class="no-entries">Could not load entries.</div>';return;}
+  if(!data.length){el.innerHTML='<div class="no-entries">No entries yet — write your first one above 🌱</div>';return;}
+  el.innerHTML=data.map(e=>{
+    const d=new Date(e.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    const preview=e.text.length>90?e.text.slice(0,90)+'…':e.text;
+    return `<div class="entry-item"><div class="entry-date">${d}</div><div class="entry-preview">${preview}</div></div>`;
+  }).join('');
+}
+
+/* ── THERAPISTS ── */
+async function loadTherapists(){
+  const el=document.getElementById('therapist-list');
+  if(!el)return;
+  const data=await apiFetch('/therapists');
+  if(!data){el.innerHTML='<div class="no-entries">Could not load therapists.</div>';return;}
+  const badges=['● Available now','Next: 3:00 PM','● Available now'];
+  const badgeClass=['avail','','avail'];
+  el.innerHTML=data.map((t,i)=>`
+    <div class="pro-card" onclick="bookTherapist(${t.id},'${t.name}')">
+      <div class="avatar">${t.avatar_emoji}</div>
+      <div class="pro-info">
+        <div class="name">${t.name}</div>
+        <div class="spec">${t.specialty}</div>
+        <span class="badge ${badgeClass[i%3]}">${badges[i%3]}</span>
+      </div>
+    </div>`).join('');
+}
+
+async function bookTherapist(id,name){
+  const scheduled=new Date(Date.now()+3600*1000).toISOString();
+  const data=await apiFetch('/bookings',{method:'POST',body:JSON.stringify({therapist_id:id,scheduled_at:scheduled,notes:''})});
+  if(data){showToast('Session booked with '+name+' ✓');playNotify();}
+}
+
+/* ── PROFILE ── */
+function loadProfile(){
+  if(!userData)return;
+  document.getElementById('profile-avatar').textContent=userData.name.charAt(0).toUpperCase();
+  document.getElementById('profile-name').textContent=userData.name;
+  document.getElementById('profile-email').textContent=userData.email;
+}
+
+async function loadMoodSummary(){
+  const data=await apiFetch('/mood/summary?days=7');
+  const el=document.getElementById('mood-summary-text');
+  if(!el)return;
+  if(!data||data.total_entries===0){el.textContent='No mood data yet. Start logging from the Home screen!';return;}
+  const scoreEmoji=['','😔','😐','🙂','😊','🤩'];
+  el.innerHTML=`Average mood: <strong>${scoreEmoji[Math.round(data.average_score)]} ${data.average_score}/5</strong><br>Most common: <strong>${data.most_common_mood}</strong><br>Entries logged: <strong>${data.total_entries}</strong>`;
+}
+
+/* ── BREATHING ── */
+let breathRunning=false,breathInterval=null,breathTimeout=null;
+const phases=[{label:'Inhale',duration:4,scale:1.3},{label:'Hold',duration:4,scale:1.3},{label:'Exhale',duration:4,scale:1.0},{label:'Hold',duration:4,scale:1.0}];
+let phaseIdx=0,countdown=4;
+
+function toggleBreath(){
+  const btn=document.getElementById('breath-btn');
+  if(!breathRunning){
+    breathRunning=true;btn.textContent='Stop';phaseIdx=0;runPhase();
+  }else{
+    breathRunning=false;btn.textContent='Start';
+    clearTimeout(breathTimeout);clearInterval(breathInterval);
+    document.getElementById('phase-text').textContent='Ready';
+    document.getElementById('count-num').textContent='4';
+    document.getElementById('circle').style.transform='';
+    showToast('Great session 🌬️');playNotify();
+  }
+}
+
+function runPhase(){
+  if(!breathRunning)return;
+  const p=phases[phaseIdx];
+  document.getElementById('phase-text').textContent=p.label;
+  document.getElementById('circle').style.transform='scale('+p.scale+')';
+  countdown=p.duration;
+  document.getElementById('count-num').textContent=countdown;
+  clearInterval(breathInterval);
+  breathInterval=setInterval(()=>{countdown--;if(countdown>=0)document.getElementById('count-num').textContent=countdown;},1000);
+  breathTimeout=setTimeout(()=>{clearInterval(breathInterval);phaseIdx=(phaseIdx+1)%phases.length;if(breathRunning)runPhase();},p.duration*1000);
+}
+
+/* ── SLEEP ── */
+let selectedSleepIdx=0,sleepTimerHandle=null;
+const audioIds=['audio-ocean','audio-rain','audio-fireplace','audio-meditation'];
+function selectSleep(el,idx){document.querySelectorAll('.sleep-option').forEach(s=>s.classList.remove('sel'));el.classList.add('sel');selectedSleepIdx=idx;}
+function playSelectedSleep(){stopAllSleep();const a=document.getElementById(audioIds[selectedSleepIdx]);if(!a)return;a.play().catch(()=>showToast('Add audio files to enable sounds 🎵',true));document.querySelectorAll('.sleep-option').forEach((o,i)=>o.classList.toggle('playing',i===selectedSleepIdx));showToast('Playing now ✨');}
+function stopAllSleep(){audioIds.forEach(id=>{const a=document.getElementById(id);if(a){a.pause();a.currentTime=0;}});document.querySelectorAll('.sleep-option').forEach(s=>s.classList.remove('playing'));clearTimeout(sleepTimerHandle);}
+function setSleepTimer(btn,minutes){document.querySelectorAll('.timer-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');clearTimeout(sleepTimerHandle);if(!minutes){showToast('Timer off');return;}showToast('Timer set: '+minutes+' min ⏱');sleepTimerHandle=setTimeout(()=>{stopAllSleep();showToast('Sleep timer ended 🌙');playNotify();},minutes*60000);}
+
+/* ── BOOT ── */
+(function boot(){
+  setDailyQuote();setJournalMeta();
+  if(token&&userData){onLoginSuccess();}else{goTo('login');}
+})();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('service-worker.js').catch(()=>{});});
+}
+</script>
+</body>
+</html>
