@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Bloom – Mental Health</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#f97c5a">
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -19,9 +19,9 @@
       --shadow:0 2px 14px rgba(249,124,90,.10);--radius:20px;
     }
     *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%;background:#ddd4ce}
-    body{font-family:'DM Sans',system-ui,sans-serif;display:flex;align-items:center;justify-content:center}
-    .phone{width:min(400px,100%);background:var(--peach-bg);min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 80px rgba(0,0,0,.18)}
+    html,body{min-height:100%;height:100%;background:#ddd4ce;margin:0;padding:0}
+    body{font-family:'DM Sans',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+    .phone{width:min(400px,100%);max-width:400px;background:var(--peach-bg);height:100dvh;max-height:100dvh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 80px rgba(0,0,0,.18);margin:0 auto}
     .status-bar{background:var(--peach);padding:12px 20px 10px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
     .app-name{font-family:'DM Serif Display',serif;font-size:18px;color:#fff;letter-spacing:.02em}
     .status-right{font-size:11px;color:rgba(255,255,255,.85);font-weight:500}
@@ -388,7 +388,7 @@
 
 <script>
 /* ── CONFIG ── change this to your server address when deployed */
-const API = 'http://127.0.0.1:8000';
+const API = 'https://bloom-app-i9cp.onrender.com';
 
 /* ── STATE ── */
 let token    = localStorage.getItem('bloom_token') || null;
