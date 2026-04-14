@@ -11,6 +11,10 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from typing import Optional
 import uvicorn
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from database import get_db, engine, Base
 from models import User, JournalEntry, MoodLog, TherapistBooking, Therapist
@@ -30,9 +34,13 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Bloom API", version="1.0.0")
 
+# ⚠️ After deploying to Render, replace "https://your-app-name.onrender.com"
+# with your actual Render URL (e.g. "https://bloom-app.onrender.com")
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://your-app-name.onrender.com").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
+    allow_origins=ALLOWED_ORIGINS + [
         "http://127.0.0.1:5500",
         "http://localhost:5500",
         "http://127.0.0.1:8000",
@@ -43,6 +51,44 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Base directory for audio files
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Audio file routes
+@app.get("/ocean.mp3")
+def get_ocean():
+    return FileResponse(os.path.join(BASE_DIR, "ocean.mp3"), media_type="audio/mpeg")
+
+@app.get("/rain.mp3")
+def get_rain():
+    return FileResponse(os.path.join(BASE_DIR, "rain.mp3"), media_type="audio/mpeg")
+
+@app.get("/fireplace.mp3")
+def get_fireplace():
+    return FileResponse(os.path.join(BASE_DIR, "fireplace.mp3"), media_type="audio/mpeg")
+
+@app.get("/meditation.mp3")
+def get_meditation():
+    return FileResponse(os.path.join(BASE_DIR, "meditation.mp3"), media_type="audio/mpeg")
+
+@app.get("/notify.mp3")
+def get_notify():
+    return FileResponse(os.path.join(BASE_DIR, "notify.mp3"), media_type="audio/mpeg")
+
+# Debug route to check file existence
+@app.get("/audio-debug")
+def audio_debug():
+    base = BASE_DIR
+    return {
+        "base_dir": base,
+        "ocean_exists": os.path.exists(os.path.join(base, "ocean.mp3")),
+        "rain_exists": os.path.exists(os.path.join(base, "rain.mp3")),
+        "fireplace_exists": os.path.exists(os.path.join(base, "fireplace.mp3")),
+        "meditation_exists": os.path.exists(os.path.join(base, "meditation.mp3")),
+        "notify_exists": os.path.exists(os.path.join(base, "notify.mp3")),
+    }
+
+# Static mount
 app.mount("/static", StaticFiles(directory="."), name="static")
 
 @app.get("/")
